@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DroneBot - Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Kanit', sans-serif; background-color: #f8f9fa; color: #1a1a1a; }
+    .sidebar-item { color: #4b5563; transition: all 0.3s; }
+    .sidebar-item:hover { background-color: #fef2f2; color: #e63946; }
+    .sidebar-active { background-color: #e63946; color: white !important; }
+    .card-white { background: white; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+    .text-red-primary { color: #e63946; }
+    .bg-red-primary { background-color: #e63946; }
+    .header-gradient { background: linear-gradient(to right, #ffffff, #fef2f2); border-bottom: 2px solid #e63946; }
+
+    /* Branch colors */
+    .bkk-accent { color: #2563eb; }
+    .hdy-accent { color: #e63946; }
+    .bg-bkk { background-color: #2563eb; }
+    .bg-hdy { background-color: #e63946; }
+    .border-bkk { border-color: #2563eb; }
+    .border-hdy { border-color: #e63946; }
+
+    /* ── Branch tab buttons ── */
+    .branch-tab {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 20px;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: transparent;
+    }
+
+    /* HDY tab */
+    .branch-tab.hdy-tab {
+      color: #e63946;
+      border: 1.5px solid #fca5a5;
+    }
+    .branch-tab.hdy-tab:hover,
+    .branch-tab.hdy-tab.active {
+      background: #fff1f2;
+    }
+
+    /* BKK tab */
+    .branch-tab.bkk-tab {
+      color: #2563eb;
+      border: 1.5px solid #93c5fd;
+    }
+    .branch-tab.bkk-tab:hover,
+    .branch-tab.bkk-tab.active {
+      background: #eff6ff;
+    }
+
+    /* Both/All tab — ใช้สีเทา ไม่ม่วง */
+    .branch-tab.both-tab {
+      color: #6b7280;
+      border: 1.5px solid #d1d5db;
+    }
+    .branch-tab.both-tab:hover,
+    .branch-tab.both-tab.active {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    /* ── Branch section card ── */
+    .branch-section { transition: all 0.3s ease; }
+
+    /* Branch headers — สีอ่อน ไม่ gradient เข้ม */
+    .branch-header-bkk {
+      background-color: #dbeafe;
+      border-bottom: 1px solid #bfdbfe;
+    }
+    .branch-header-hdy {
+      background-color: #fee2e2;
+      border-bottom: 1px solid #fecaca;
+    }
+
+    .branch-badge-bkk {
+      background: #bfdbfe;
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+    }
+    .branch-badge-hdy {
+      background: #fecaca;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+
+    /* View toggle */
+    .view-btn {
+      padding: 6px 16px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #6b7280;
+    }
+    .view-btn.active-hdy { background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.1); color: #e63946; }
+    .view-btn.active-bkk { background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.1); color: #2563eb; }
+
+    /* Skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* Activity card hover */
+    .act-card-hdy:hover { background: #fff5f5; }
+    .act-card-bkk:hover { background: #eff6ff; }
+
+    /* Divider label */
+    .divider-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 16px 0;
+    }
+    .divider-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e5e7eb;
+    }
+  </style>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+</head>
+<body class="flex flex-col md:flex-row min-h-screen">
+  <style>body { visibility: hidden; }</style>
+  <script src="./js/auth-guard.js"></script>
+
+  <div id="main-navbar"></div>
+
+  <!-- Main Content -->
+  <main class="flex-1 w-full p-4 md:p-8">
+    <div class="max-w-7xl mx-auto w-full">
+
+      <!-- HEADER -->
+      <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-6 md:p-8 rounded-3xl header-gradient shadow-sm mt-6">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold text-gray-900">
+            WELCOME, <span id="userNameDisplay" class="text-red-primary">User</span>
+          </h1>
+          <p class="text-gray-500 mt-1" id="todayDateLabel">Current date...</p>
+        </div>
+      </header>
+
+      <!-- BRANCH TABS -->
+      <div class="mt-6 flex flex-wrap gap-3 items-center">
+        <span class="text-sm font-bold text-gray-400 mr-1">SHOW:</span>
+        <button onclick="switchBranchView('both')" id="tab-both" class="branch-tab both-tab active">
+          <i class="fas fa-globe-asia"></i> All
+        </button>
+        <button onclick="switchBranchView('hdy')" id="tab-hdy" class="branch-tab hdy-tab">
+          <span class="text-xs font-black px-2 py-0.5 rounded-md bg-red-100 text-red-600">HDY</span> Hat Yai
+        </button>
+        <button onclick="switchBranchView('bkk')" id="tab-bkk" class="branch-tab bkk-tab">
+          <span class="text-xs font-black px-2 py-0.5 rounded-md bg-blue-100 text-blue-600">BKK</span> Bangkok
+        </button>
+      </div>
+
+      <!-- CONTENT SECTIONS -->
+      <div class="mt-4 grid grid-cols-1 xl:grid-cols-2 gap-6" id="branchGrid">
+
+        <!-- ===== HAT YAI SECTION ===== -->
+        <div id="section-hdy" class="branch-section card-white rounded-3xl overflow-hidden">
+          <!-- Branch Header -->
+          <div class="branch-header-hdy p-5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-white/60 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-city text-red-400 text-lg"></i>
+              </div>
+              <div>
+                <h2 class="text-red-800 font-bold text-lg leading-tight">Hat Yai</h2>
+              </div>
+            </div>
+            <span class="branch-badge-hdy text-xs font-bold px-3 py-1.5 rounded-xl">HDY</span>
+          </div>
+
+          <!-- Body -->
+          <div class="p-5">
+            <!-- View Toggle -->
+            <div class="flex items-center justify-between mb-5">
+              <div class="flex items-center gap-2 text-sm font-bold text-gray-600">
+                <i class="fas fa-clock text-red-400 text-xs"></i>
+                <span id="hdy-viewTitle">Today</span>
+              </div>
+              <div class="flex bg-gray-100 p-1 rounded-xl gap-0.5">
+                <button onclick="changeView('hdy', 'day')" id="hdy-btn-day" class="view-btn active-hdy">Today</button>
+                <button onclick="changeView('hdy', 'week')" id="hdy-btn-week" class="view-btn">This Week</button>
+                <button onclick="changeView('hdy', 'all')" id="hdy-btn-all" class="view-btn">All</button>
+              </div>
+            </div>
+
+            <!-- Activity List -->
+            <div id="hdy-activityContainer" class="space-y-3">
+              <!-- skeleton -->
+              <div class="flex items-center gap-3 p-4 rounded-2xl border border-gray-50 bg-white shadow-sm">
+                <div class="skeleton w-24 h-10 rounded-xl"></div>
+                <div class="flex-1">
+                  <div class="skeleton h-5 w-3/4 mb-2"></div>
+                  <div class="skeleton h-3 w-1/2"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== BANGKOK SECTION ===== -->
+        <div id="section-bkk" class="branch-section card-white rounded-3xl overflow-hidden">
+          <!-- Branch Header -->
+          <div class="branch-header-bkk p-5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-white/60 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-building text-blue-400 text-lg"></i>
+              </div>
+              <div>
+                <h2 class="text-blue-800 font-bold text-lg leading-tight">Bangkok</h2>
+              </div>
+            </div>
+            <span class="branch-badge-bkk text-xs font-bold px-3 py-1.5 rounded-xl">BKK</span>
+          </div>
+
+          <!-- Body -->
+          <div class="p-5">
+            <!-- View Toggle -->
+            <div class="flex items-center justify-between mb-5">
+              <div class="flex items-center gap-2 text-sm font-bold text-gray-600">
+                <i class="fas fa-clock text-blue-400 text-xs"></i>
+                <span id="bkk-viewTitle">Today</span>
+              </div>
+              <div class="flex bg-gray-100 p-1 rounded-xl gap-0.5">
+                <button onclick="changeView('bkk', 'day')" id="bkk-btn-day" class="view-btn active-bkk">Today</button>
+                <button onclick="changeView('bkk', 'week')" id="bkk-btn-week" class="view-btn">This Week</button>
+                <button onclick="changeView('bkk', 'all')" id="bkk-btn-all" class="view-btn">All</button>
+              </div>
+            </div>
+
+            <!-- Activity List -->
+            <div id="bkk-activityContainer" class="space-y-3">
+              <!-- skeleton -->
+              <div class="flex items-center gap-3 p-4 rounded-2xl border border-gray-50 bg-white shadow-sm">
+                <div class="skeleton w-24 h-10 rounded-xl"></div>
+                <div class="flex-1">
+                  <div class="skeleton h-5 w-3/4 mb-2"></div>
+                  <div class="skeleton h-3 w-1/2"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- END GRID -->
+
+    </div>
+  </main>
+
+<script src="./js/config.js"></script>
+<script src="./js/main-navbar.js"></script>
+<script>
+  // ─── State ───────────────────────────────────────────────
+  const branchViews  = { hdy: 'day', bkk: 'day' };
+  const viewTitles   = { day: 'Today', week: 'This Week', all: 'All' };
+  let   activeBranchView = 'both'; // 'both' | 'hdy' | 'bkk'
+
+  // ─── Init ────────────────────────────────────────────────
+  window.onload = function () {
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    if (userData) {
+      document.getElementById('userNameDisplay').innerText = userData.user;
+      if (typeof updateMainNavbarUser === 'function') updateMainNavbarUser();
+    }
+
+    const now = new Date();
+    document.getElementById('todayDateLabel').innerText =
+      now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    loadActivities('hdy');
+    loadActivities('bkk');
+  };
+
+  // ─── Branch view switcher ─────────────────────────────────
+  function switchBranchView(mode) {
+    activeBranchView = mode;
+
+    ['both', 'hdy', 'bkk'].forEach(t => {
+        document.getElementById('tab-' + t).classList.remove('active');
+    });
+    document.getElementById('tab-' + mode).classList.add('active');
+
+    const secHdy = document.getElementById('section-hdy');
+    const secBkk = document.getElementById('section-bkk');
+    const grid   = document.getElementById('branchGrid');
+
+    // ซ่อน/แสดง header
+    const hdyHeader = secHdy.querySelector('.branch-header-hdy');
+    const bkkHeader = secBkk.querySelector('.branch-header-bkk');
+
+    if (mode === 'both') {
+        secHdy.style.display = '';
+        secBkk.style.display = '';
+        grid.classList.remove('xl:grid-cols-1');
+        grid.classList.add('xl:grid-cols-2');
+        hdyHeader.style.display = '';
+        bkkHeader.style.display = '';
+    } else if (mode === 'hdy') {
+        secHdy.style.display = '';
+        secBkk.style.display = 'none';
+        grid.classList.remove('xl:grid-cols-2');
+        grid.classList.add('xl:grid-cols-1');
+        hdyHeader.style.display = 'none';
+    } else {
+        secHdy.style.display = 'none';
+        secBkk.style.display = '';
+        grid.classList.remove('xl:grid-cols-2');
+        grid.classList.add('xl:grid-cols-1');
+        bkkHeader.style.display = 'none';
+    }
+}
+  // ─── View toggle per branch ───────────────────────────────
+  function changeView(branch, view) {
+    branchViews[branch] = view;
+
+    ['day', 'week', 'all'].forEach(v => {
+      const btn = document.getElementById(`${branch}-btn-${v}`);
+      btn.classList.remove('active-hdy', 'active-bkk');
+      btn.classList.add(); // noop cleanup
+    });
+
+    const activeClass = branch === 'hdy' ? 'active-hdy' : 'active-bkk';
+    const activeBtn   = document.getElementById(`${branch}-btn-${view}`);
+    activeBtn.classList.add(activeClass);
+
+    document.getElementById(`${branch}-viewTitle`).innerText = viewTitles[view];
+    loadActivities(branch);
+  }
+
+  // ─── Load activities ──────────────────────────────────────
+  function loadActivities(branch) {
+    const view      = branchViews[branch];
+    const container = document.getElementById(`${branch}-activityContainer`);
+    const accentBg  = branch === 'hdy' ? 'bg-hdy' : 'bg-bkk';
+    const hoverCls  = branch === 'hdy' ? 'act-card-hdy' : 'act-card-bkk';
+
+    // Skeleton
+    container.innerHTML = `
+      <div class="flex items-center gap-3 p-4 rounded-2xl border border-gray-50 bg-white shadow-sm">
+        <div class="skeleton w-24 h-10 rounded-xl"></div>
+        <div class="flex-1">
+          <div class="skeleton h-5 w-3/4 mb-2"></div>
+          <div class="skeleton h-3 w-1/2"></div>
+        </div>
+      </div>`;
+
+    const url = branch === 'bkk' ? scriptURLBKK : scriptURL;
+fetch(url, {
+  method: "POST",
+  body: JSON.stringify({
+    action: "getActivities",
+    view:   view,
+    branch: branch
+  })
+})
+    .then(res => res.json())
+    .then(response => {
+      container.innerHTML = '';
+
+      if (response.status === "success" && response.data && response.data.length > 0) {
+
+        let sortedData = response.data;
+        if (view === 'week' || view === 'all') {
+          sortedData = response.data.slice().sort((a, b) => {
+            return new Date(b.date + ' ' + b.startTime) - new Date(a.date + ' ' + a.startTime);
+          });
+        }
+
+        sortedData.forEach(act => {
+          const dateLabel = view !== 'day'
+            ? `<p class="text-[10px] font-bold ${branch === 'hdy' ? 'text-red-400' : 'text-blue-400'} mb-0.5">${act.date}</p>`
+            : '';
+
+          container.innerHTML += `
+            <div class="flex items-center gap-3 p-4 rounded-2xl border border-gray-50 bg-white shadow-sm ${hoverCls} transition cursor-default">
+              <div class="${accentBg} text-white px-3 py-2.5 rounded-xl text-center min-w-[90px] flex-shrink-0">
+                <span class="text-xs font-bold block leading-tight">${act.startTime}</span>
+<span class="text-xs font-bold opacity-90 block">–${act.endTime}</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                ${dateLabel}
+                <h3 class="font-bold text-gray-800 text-sm leading-snug truncate">${act.title}</h3>
+                <p class="text-gray-400 text-xs mt-0.5 truncate">
+                  <i class="fas fa-map-marker-alt mr-1"></i>${act.location || '–'}
+                </p>
+              </div>
+            </div>`;
+        });
+
+      } else {
+        const emptyColor = branch === 'hdy' ? 'border-red-100 text-red-300' : 'border-blue-100 text-blue-300';
+        container.innerHTML = `
+          <p class="italic py-8 text-center text-sm border-2 border-dashed rounded-2xl ${emptyColor}">
+            No activities for ${viewTitles[view]}
+          </p>`;
+      }
+    })
+    .catch(err => {
+      console.error("Error:", err);
+      container.innerHTML = `
+        <p class="text-red-500 italic py-8 text-center text-sm border-2 border-dashed border-red-100 rounded-2xl">
+          Unable to load activities
+        </p>`;
+    });
+  }
+</script>
+</body>
+</html>
